@@ -1,9 +1,11 @@
 package crelle.ftp.client;
 
 import org.apache.commons.net.PrintCommandListener;
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
+import org.apache.commons.net.*;
 
 import java.io.*;
 import java.util.Arrays;
@@ -19,41 +21,43 @@ import java.util.stream.Collectors;
  * @date:2021/4/25
  * @description:XX
  **/
-public class FtpClient {
+public class MyFtpClient {
 
     private final String server;
     private final int port;
     private final String user;
     private final String password;
-    private FTPClient ftp;
+    public FTPClient ftp;
 
-    FtpClient(String server, int port, String user, String password) {
+
+    public MyFtpClient(String server, int port, String user, String password) {
         this.server = server;
         this.port = port;
         this.user = user;
         this.password = password;
     }
 
-    void open() throws IOException {
+
+    public void open() throws IOException {
         ftp = new FTPClient();
-
-        ftp.addProtocolCommandListener(new PrintCommandListener(new PrintWriter(System.out)));
-
+//        ftp.addProtocolCommandListener(new PrintCommandListener(new PrintWriter(System.out)));
         ftp.connect(server, port);
         int reply = ftp.getReplyCode();
         if (!FTPReply.isPositiveCompletion(reply)) {
             ftp.disconnect();
             throw new IOException("Exception in connecting to FTP Server");
         }
-
         ftp.login(user, password);
+        ftp.setFileType(FTP.BINARY_FILE_TYPE);
+        ftp.setFileTransferMode(FTP.BINARY_FILE_TYPE);
+
     }
 
     void close() throws IOException {
         ftp.disconnect();
     }
 
-    Collection<String> listFiles(String path) throws IOException {
+    public Collection<String> listFiles(String path) throws IOException {
         FTPFile[] files = ftp.listFiles(path);
 
         return Arrays.stream(files)
@@ -70,8 +74,8 @@ public class FtpClient {
      * @return:void
      * @throw:
      */
-    void putFileToPath(File file, String path) throws IOException {
-        ftp.storeFile(path, new FileInputStream(file));
+    public void putFileToPath(InputStream inputStream, String path) throws IOException {
+        ftp.storeFile(path, inputStream);
     }
 
     /**
@@ -98,7 +102,7 @@ public class FtpClient {
      * @return:boolean
      * @throw:
      */
-    boolean deleteFile(String filePath) throws IOException {
+    public boolean deleteFile(String filePath) throws IOException {
         return ftp.deleteFile(filePath);
     }
 
@@ -111,7 +115,7 @@ public class FtpClient {
      * @return:boolean
      * @throw:
      */
-    boolean batchDeleteFile(List<String> filePaths) throws IOException {
+    public boolean batchDeleteFile(List<String> filePaths) throws IOException {
         filePaths.forEach(filePath -> {
             try {
                 ftp.deleteFile(filePath);
@@ -131,7 +135,7 @@ public class FtpClient {
      * @return:void
      * @throw:
      */
-    void downloadFile(String source, String destination) throws IOException {
+    public void downloadFile(String source, String destination) throws IOException {
         FileOutputStream out = new FileOutputStream(destination);
         ftp.retrieveFile(source, out);
         out.close();
